@@ -63,7 +63,7 @@ class CreatedHandler(FileSystemEventHandler):
 
                 # Run AI module to recognize
                 processedtime = datetime.now()
-                output = plate_recognizer_api('{}/{}'.format(os.getenv("AWS_S3_BUCKET_ENDPOINT"), s3_object))
+                output = plate_recognizer_api('https://{}.s3.amazonaws.com/{}'.format(os.getenv("AWS_S3_BUCKET_NAME"), s3_object))
                 logging.info('Successfully launched recogintion module')
 
                 # Execute the SQL command
