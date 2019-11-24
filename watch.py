@@ -43,7 +43,9 @@ class ModifiedHandler(FileSystemEventHandler):
             size = 0
             while True:
                 time.sleep(3)
-                newsize = os.stat(path).st_size
+                newsize = os.stat(event.src_path).st_size
+                print(size)
+                print(newsize)
                 if (size == newsize):
                     # Parse ftp user and file name
                     file_name, file_extension = os.path.splitext(event.src_path)
