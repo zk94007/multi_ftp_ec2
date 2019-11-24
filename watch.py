@@ -10,11 +10,14 @@ import pymysql
 import magic
 import requests
 
+from daemonize import Daemonize
 from botocore.exceptions import ClientError
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, LoggingEventHandler, FileCreatedEvent
 from dotenv import load_dotenv, find_dotenv
 from datetime import datetime
+
+pid = "/tmp/camera_watch.pid"
 
 def plate_recognizer_api(cloud_url):
     regions = ['cl']
@@ -93,7 +96,7 @@ class CreatedHandler(FileSystemEventHandler):
                 logging.error(sys.exc_info()[0])
                 exit()
 
-if __name__ == "__main__":
+def main():
     # load .env file
     load_dotenv(find_dotenv())
 
@@ -153,3 +156,6 @@ if __name__ == "__main__":
         observer.stop()
         db.close()
     observer.join()
+
+daemon = Daemonize(app="camera_watch", pid=pid, action=main)
+daemon.start()
