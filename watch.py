@@ -96,6 +96,7 @@ class ModifiedHandler(FileSystemEventHandler):
                         conn.execute(query)
                         db.commit()
                         logging.info('Successfully updated database record')
+                        break
                     except:
                         logging.error(sys.exc_info()[0])
                         exit()
