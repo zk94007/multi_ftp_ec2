@@ -12,7 +12,7 @@ import requests
 
 from botocore.exceptions import ClientError
 from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler, LoggingEventHandler, FileCreatedEvent
+from watchdog.events import FileSystemEventHandler, LoggingEventHandler, FileModifiedEvent
 from dotenv import load_dotenv, find_dotenv
 from datetime import datetime
 
@@ -36,62 +36,77 @@ def plate_recognizer_api(cloud_url):
     else:
         return "True", response.json()['results'][0]['box'], response.json()['results'][0]['plate'],  response.json()['processing_time']
 
+def check_file_size(path, size):
+    newsize = os.stat(path).st_size
+    if (newsize === size) {
+
+    } else {
+
+    }
+
 class ModifiedHandler(FileSystemEventHandler):
     def on_modified(self, event):
         # If file is uploaded
-        if (isinstance(event, FileCreatedEvent)):
-            # Parse ftp user and file name
-            file_name, file_extension = os.path.splitext(event.src_path)
-            camera_name = event.src_path.replace(os.getenv("WATCH_DIRECTORY"), '').split('/')[0]
-            camera_id = camera_name.replace('USR_YTUZRXGOAC_', '')
-            s3_object = '{}_{}{}'.format(camera_id, int(datetime.now().timestamp() * 1000), file_extension)
-            mime = magic.Magic(mime=True)
-            content_type = mime.from_file(event.src_path)
+        if (isinstance(event, FileModifiedEvent)):
+            size = 0
+            while True:
+                time.sleep(3)
+                newsize = os.stat(path).st_size
+                if (size === newsize):
+                    # Parse ftp user and file name
+                    file_name, file_extension = os.path.splitext(event.src_path)
+                    camera_name = event.src_path.replace(os.getenv("WATCH_DIRECTORY"), '').split('/')[0]
+                    camera_id = camera_name.replace('USR_YTUZRXGOAC_', '')
+                    s3_object = '{}_{}{}'.format(camera_id, int(datetime.now().timestamp() * 1000), file_extension)
+                    mime = magic.Magic(mime=True)
+                    content_type = mime.from_file(event.src_path)
 
-            try:
-                # Upload file to S3 bucket
-                s3.upload_file(
-                    event.src_path,
-                    os.getenv("AWS_S3_BUCKET_NAME"),
-                    s3_object,
-                    ExtraArgs={
-                        'ACL': 'public-read',
-                        'ContentType': content_type
-                    }
-                )
-                logging.info('Successfully uploaded to AWS S3 Bucket')
+                    try:
+                        # Upload file to S3 bucket
+                        s3.upload_file(
+                            event.src_path,
+                            os.getenv("AWS_S3_BUCKET_NAME"),
+                            s3_object,
+                            ExtraArgs={
+                                'ACL': 'public-read',
+                                'ContentType': content_type
+                            }
+                        )
+                        logging.info('Successfully uploaded to AWS S3 Bucket')
 
-                # Run AI module to recognize
-                processedtime = datetime.now()
-                output = plate_recognizer_api('https://{}.s3.amazonaws.com/{}'.format(os.getenv("AWS_S3_BUCKET_NAME"), s3_object))
-                logging.info('Successfully launched recogintion module')
+                        # Run AI module to recognize
+                        processedtime = datetime.now()
+                        output = plate_recognizer_api('https://{}.s3.amazonaws.com/{}'.format(os.getenv("AWS_S3_BUCKET_NAME"), s3_object))
+                        logging.info('Successfully launched recogintion module')
 
-                # Execute the SQL command
-                query='INSERT INTO LPRecStatus(\
-                    PictureID, \
-                    Plate, \
-                    RecoginitionStatus, \
-                    RecoginitionPercentage, \
-                    CarPosition, \
-                    ProcessedDate, \
-                    ProcessedTime, \
-                    CreationTime, \
-                    CameraId, \
-                    CameraCode) VALUES \
-                    ("{}", "{}", {}, 0, "", "{}", "{}", "{}", "{}", "{}")'.format(s3_object, output[2], output[0]=="True",
-                    processedtime,
-                    processedtime,
-                    datetime.now(),
-                    camera_id,
-                    camera_id
-                    )
-                logging.info('SQL Query: {}'.format(query))
-                conn.execute(query)
-                db.commit()
-                logging.info('Successfully updated database record')
-            except:
-                logging.error(sys.exc_info()[0])
-                exit()
+                        # Execute the SQL command
+                        query='INSERT INTO LPRecStatus(\
+                            PictureID, \
+                            Plate, \
+                            RecoginitionStatus, \
+                            RecoginitionPercentage, \
+                            CarPosition, \
+                            ProcessedDate, \
+                            ProcessedTime, \
+                            CreationTime, \
+                            CameraId, \
+                            CameraCode) VALUES \
+                            ("{}", "{}", {}, 0, "", "{}", "{}", "{}", "{}", "{}")'.format(s3_object, output[2], output[0]=="True",
+                            processedtime,
+                            processedtime,
+                            datetime.now(),
+                            camera_id,
+                            camera_id
+                            )
+                        logging.info('SQL Query: {}'.format(query))
+                        conn.execute(query)
+                        db.commit()
+                        logging.info('Successfully updated database record')
+                    except:
+                        logging.error(sys.exc_info()[0])
+                        exit()
+                else:
+                    newsize = size
 
 if __name__ == "__main__":
     # load .env file
