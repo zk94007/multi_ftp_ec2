@@ -1,0 +1,12 @@
+[Unit]
+Description=Watch Camera Service
+After=multi-user.target
+Conflicts=getty@tty1.service
+
+[Service]
+Type=simple
+ExecStart=/home/ec2-user/multi_ftp_ec2/.venv/bin/python3 /home/ec2-user/multi_ftp_ec2/watch.py
+StandardInput=tty-force
+
+[Install]
+WantedBy=multi-user.target
