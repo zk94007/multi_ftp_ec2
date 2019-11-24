@@ -1,5 +1,5 @@
-#!/usr/bin/python3  
-#-*- coding: utf-8 -*-                                                                                                                           
+#!/usr/bin/python3
+#-*- coding: utf-8 -*-
 
 import os
 import sys
@@ -20,8 +20,8 @@ def plate_recognizer_api(cloud_url):
     regions = ['cl']
     image_response  = requests.get(cloud_url)
     temp_image_path = r"temp\test_image.jpg"
-    open(temp_image_path, "wb").write(image_response.content) 
-    
+    open(temp_image_path, "wb").write(image_response.content)
+
     with open(temp_image_path,"rb") as image_to_test:
         response = requests.post(
             'https://api.platerecognizer.com/v1/plate-reader/',
@@ -32,10 +32,10 @@ def plate_recognizer_api(cloud_url):
         if 'cannot identify image' in response.json()['detail']:
             print("recognition status: ", "False")
         return False, None, None, None
-        
+
     else:
         return "True", response.json()['results'][0]['box'], response.json()['results'][0]['plate'],  response.json()['processing_time']
-    
+
 class CreatedHandler(FileSystemEventHandler):
     def on_created(self, event):
         # If file is uploaded
@@ -52,7 +52,7 @@ class CreatedHandler(FileSystemEventHandler):
                 # Upload file to S3 bucket
                 s3.upload_file(
                     event.src_path,
-                    os.getenv("AWS_S3_BUCKET_NAME"), 
+                    os.getenv("AWS_S3_BUCKET_NAME"),
                     s3_object,
                     ExtraArgs={
                         'ACL': 'public-read',
@@ -67,7 +67,7 @@ class CreatedHandler(FileSystemEventHandler):
                 logging.info('Successfully launched recogintion module')
 
                 # Execute the SQL command
-                conn.execute('INSERT INTO LPRecStatus(\
+                query='INSERT INTO LPRecStatus(\
                     PictureID, \
                     Plate, \
                     RecoginitionStatus, \
@@ -84,7 +84,9 @@ class CreatedHandler(FileSystemEventHandler):
                     datetime.now(),
                     camera_id,
                     camera_id
-                    ))
+                    )
+                logging.info('SQL Query: {}'.format(query))
+                conn.execute(query)
                 db.commit()
                 logging.info('Successfully updated database record')
             except:
