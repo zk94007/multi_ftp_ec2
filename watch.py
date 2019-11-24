@@ -96,12 +96,11 @@ class ModifiedHandler(FileSystemEventHandler):
                         conn.execute(query)
                         db.commit()
                         logging.info('Successfully updated database record')
-                        break
                     except:
                         logging.error(sys.exc_info()[0])
                         exit()
-                else:
-                    size = newsize
+                    break
+                size = newsize
 
 if __name__ == "__main__":
     # load .env file
