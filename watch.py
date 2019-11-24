@@ -52,7 +52,7 @@ class ModifiedHandler(FileSystemEventHandler):
             while True:
                 time.sleep(3)
                 newsize = os.stat(path).st_size
-                if (size === newsize):
+                if (size == newsize):
                     # Parse ftp user and file name
                     file_name, file_extension = os.path.splitext(event.src_path)
                     camera_name = event.src_path.replace(os.getenv("WATCH_DIRECTORY"), '').split('/')[0]
