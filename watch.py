@@ -100,7 +100,7 @@ class ModifiedHandler(FileSystemEventHandler):
                         logging.error(sys.exc_info()[0])
                         exit()
                 else:
-                    newsize = size
+                    size = newsize
 
 if __name__ == "__main__":
     # load .env file
