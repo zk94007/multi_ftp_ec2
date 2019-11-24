@@ -36,8 +36,8 @@ def plate_recognizer_api(cloud_url):
     else:
         return "True", response.json()['results'][0]['box'], response.json()['results'][0]['plate'],  response.json()['processing_time']
 
-class CreatedHandler(FileSystemEventHandler):
-    def on_created(self, event):
+class ModifiedHandler(FileSystemEventHandler):
+    def on_modified(self, event):
         # If file is uploaded
         if (isinstance(event, FileCreatedEvent)):
             # Parse ftp user and file name
@@ -136,12 +136,12 @@ if __name__ == "__main__":
     # Setup watchdog Observer
     observer = Observer()
 
-    # Define CreatedHandler and LoggingHandler
-    created_handler = CreatedHandler()
+    # Define ModifiedHandler and LoggingHandler
+    modified_handler = ModifiedHandler()
     logging_handler = LoggingEventHandler()
 
     # Setup handler for the specific directory changes
-    observer.schedule(created_handler, os.getenv("WATCH_DIRECTORY"), recursive=True)
+    observer.schedule(modified_handler, os.getenv("WATCH_DIRECTORY"), recursive=True)
     observer.schedule(logging_handler, os.getenv("WATCH_DIRECTORY"), recursive=True)
 
     # Start watching
