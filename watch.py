@@ -36,14 +36,6 @@ def plate_recognizer_api(cloud_url):
     else:
         return "True", response.json()['results'][0]['box'], response.json()['results'][0]['plate'],  response.json()['processing_time']
 
-def check_file_size(path, size):
-    newsize = os.stat(path).st_size
-    if (newsize === size) {
-
-    } else {
-
-    }
-
 class ModifiedHandler(FileSystemEventHandler):
     def on_modified(self, event):
         # If file is uploaded
