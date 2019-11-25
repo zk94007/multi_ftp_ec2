@@ -16,6 +16,8 @@ from watchdog.events import FileSystemEventHandler, LoggingEventHandler, FileCre
 from dotenv import load_dotenv, find_dotenv
 from datetime import datetime
 
+CHECK_INTERVAL = 3
+
 def plate_recognizer_api(cloud_url):
     regions = ['cl']
     image_response  = requests.get(cloud_url)
@@ -42,10 +44,8 @@ class CreatedHandler(FileSystemEventHandler):
         if (isinstance(event, FileCreatedEvent)):
             size = 0
             while True:
-                time.sleep(3)
+                time.sleep(CHECK_INTERVAL)
                 newsize = os.stat(event.src_path).st_size
-                print(size)
-                print(newsize)
                 if (size == newsize):
                     # Parse ftp user and file name
                     file_name, file_extension = os.path.splitext(event.src_path)
