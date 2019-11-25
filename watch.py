@@ -16,7 +16,7 @@ from watchdog.events import FileSystemEventHandler, LoggingEventHandler, FileCre
 from dotenv import load_dotenv, find_dotenv
 from datetime import datetime
 
-CHECK_INTERVAL = 3
+CHECK_INTERVAL = 5
 
 def plate_recognizer_api(cloud_url):
     regions = ['cl']
@@ -96,6 +96,9 @@ class CreatedHandler(FileSystemEventHandler):
                         conn.execute(query)
                         db.commit()
                         logging.info('Successfully updated database record')
+
+                        os.remove(event.src_path)
+                        logging.info('File is removed from server')
                     except:
                         logging.error(sys.exc_info()[0])
                         exit()
