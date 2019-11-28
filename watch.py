@@ -136,12 +136,6 @@ if __name__ == "__main__":
                         format='%(asctime)s - %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
 
-    # setup s3 client
-    try:
-    except:
-        logging.error('Can\'t initialize AWS Client')
-        exit()
-
     # Setup watchdog Observer
     observer = Observer()
 
