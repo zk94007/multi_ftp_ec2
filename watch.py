@@ -41,7 +41,7 @@ def plate_recognizer_api(cloud_url):
 class CreatedHandler(FileSystemEventHandler):
     def on_created(self, event):
         # If file is uploaded
-        if (isinstance(event, FileCreatedEvent)):
+        if (isinstance(event, FileCreatedEvent) and event.src_path.find('.bash_logout') == -1 and event.src_path.find('.bash_profile') == -1 and event.src_path.find('.bashrc') == -1):
             size = 0
             while True:
                 time.sleep(CHECK_INTERVAL)
@@ -56,6 +56,11 @@ class CreatedHandler(FileSystemEventHandler):
                     content_type = mime.from_file(event.src_path)
 
                     try:
+                        s3 = boto3.client(
+                            's3',
+                            aws_access_key_id=os.getenv("AWS_ACCESS_KEY"),
+                            aws_secret_access_key=os.getenv("AWS_SECRET_KEY"))
+                        logging.info('AWS Client is created')
                         # Upload file to S3 bucket
                         s3.upload_file(
                             event.src_path,
@@ -72,6 +77,21 @@ class CreatedHandler(FileSystemEventHandler):
                         processedtime = datetime.now()
                         output = plate_recognizer_api('https://{}.s3.amazonaws.com/{}'.format(os.getenv("AWS_S3_BUCKET_NAME"), s3_object))
                         logging.info('Successfully launched recogintion module')
+
+                        # setup db connection
+                        db = pymysql.connect(
+                            os.getenv("DB_HOST"), # Database Host Name
+                            # "imagerecdb.c0mcsz5z1xgj.us-east-1.rds.amazonaws.com",
+                            os.getenv("DB_USERNAME"), # Database User Name
+                            # "iradmin",
+                            os.getenv("DB_PASSWORD"), # Datbase User Password
+                            # "7Q1TnETGj1ZH7fkOtv3t",
+                            os.getenv("DB_NAME") # Database Name
+                        )
+                        logging.info('Connected to Database')
+
+                        # setup cursor for db
+                        conn = db.cursor()
 
                         # Execute the SQL command
                         query='INSERT INTO LPRecStatus(\
@@ -96,12 +116,13 @@ class CreatedHandler(FileSystemEventHandler):
                         conn.execute(query)
                         db.commit()
                         logging.info('Successfully updated database record')
+                        db.close()
+                        logging.info('Database connection closed')
 
                         os.remove(event.src_path)
                         logging.info('File is removed from server')
                     except:
                         logging.error(sys.exc_info()[0])
-                        exit()
                     break
                 size = newsize
 
@@ -115,32 +136,8 @@ if __name__ == "__main__":
                         format='%(asctime)s - %(message)s',
                         datefmt='%Y-%m-%d %H:%M:%S')
 
-    # setup db connection
-    try:
-        db = pymysql.connect(
-            os.getenv("DB_HOST"), # Database Host Name
-            # "imagerecdb.c0mcsz5z1xgj.us-east-1.rds.amazonaws.com",
-            os.getenv("DB_USERNAME"), # Database User Name
-            # "iradmin",
-            os.getenv("DB_PASSWORD"), # Datbase User Password
-            # "7Q1TnETGj1ZH7fkOtv3t",
-            os.getenv("DB_NAME") # Database Name
-        )
-        logging.info('Connected to Database')
-    except pymysql.Error as e:
-        logging.error(e)
-        exit()
-
-    # setup cursor for db
-    conn = db.cursor()
-
     # setup s3 client
     try:
-        s3 = boto3.client(
-            's3',
-            aws_access_key_id=os.getenv("AWS_ACCESS_KEY"),
-            aws_secret_access_key=os.getenv("AWS_SECRET_KEY"))
-        logging.info('AWS Client is created')
     except:
         logging.error('Can\'t initialize AWS Client')
         exit()
@@ -163,5 +160,4 @@ if __name__ == "__main__":
             time.sleep(1)
     except KeyboardInterrupt:
         observer.stop()
-        db.close()
     observer.join()
